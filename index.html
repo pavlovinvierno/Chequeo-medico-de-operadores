@@ -24,6 +24,7 @@
     <form id="checkupForm" novalidate>
       <section class="card">
         <h2>Datos del registro</h2>
+        <p class="hint">La fecha y hora se cargan inicialmente con el momento actual, pero puedes modificarlas manualmente.</p>
         <div class="grid two">
           <label>Fecha
             <input id="fecha" name="fecha" type="date" required>
@@ -67,11 +68,16 @@
             <option value="">Seleccionar…</option>
             <option>Negativo</option>
             <option>Positivo</option>
-            <option>No realizado</option>
+            <option>No aplica</option>
           </select>
         </label>
         <label>Alcoholímetro
-          <input id="alcoholimetro" name="alcoholimetro" type="number" inputmode="decimal" min="0" step="0.001" placeholder="Valor medido">
+          <select id="alcoholimetro" name="alcoholimetro" required>
+            <option value="">Seleccionar…</option>
+            <option>Negativo</option>
+            <option>Positivo</option>
+            <option>No aplica</option>
+          </select>
         </label>
         <label>Destino
           <input id="destino" name="destino" type="text" placeholder="Ruta / destino">
@@ -80,25 +86,50 @@
 
       <section class="card">
         <h2>Signos y mediciones</h2>
-        <div class="grid two">
+        <p class="hint">Si una medición no está disponible, marca <strong>No aplica</strong>. No es necesario introducir un valor.</p>
+
+        <div class="measurement">
           <label>Tensión arterial
             <input id="ta" name="ta" type="text" inputmode="text" placeholder="120/80">
           </label>
-          <label>Temperatura corporal (°C)
-            <input id="temperatura" name="temperatura" type="number" inputmode="decimal" min="30" max="45" step="0.1" placeholder="36.5">
-          </label>
-          <label>Glucosa (mg/dL)
-            <input id="glucosa" name="glucosa" type="number" inputmode="decimal" min="20" max="600" step="0.1">
-          </label>
-          <label>Peso (kg)
-            <input id="peso" name="peso" type="number" inputmode="decimal" min="20" max="300" step="0.1">
-          </label>
-          <label>Frecuencia cardiaca (lpm)
-            <input id="fc" name="fc" type="number" inputmode="numeric" min="20" max="250">
-          </label>
-          <label>SpO₂ (%)
-            <input id="spo2" name="spo2" type="number" inputmode="numeric" min="0" max="100">
-          </label>
+          <label class="na-option"><input type="checkbox" data-na-for="ta"> <span>No aplica</span></label>
+        </div>
+
+        <div class="grid two">
+          <div class="measurement">
+            <label>Temperatura corporal (°C)
+              <input id="temperatura" name="temperatura" type="number" inputmode="decimal" min="30" max="45" step="0.1" placeholder="36.5">
+            </label>
+            <label class="na-option"><input type="checkbox" data-na-for="temperatura"> <span>No aplica</span></label>
+          </div>
+
+          <div class="measurement">
+            <label>Glucosa (mg/dL)
+              <input id="glucosa" name="glucosa" type="number" inputmode="decimal" min="20" max="600" step="0.1">
+            </label>
+            <label class="na-option"><input type="checkbox" data-na-for="glucosa"> <span>No aplica</span></label>
+          </div>
+
+          <div class="measurement">
+            <label>Peso (kg)
+              <input id="peso" name="peso" type="number" inputmode="decimal" min="20" max="300" step="0.1">
+            </label>
+            <label class="na-option"><input type="checkbox" data-na-for="peso"> <span>No aplica</span></label>
+          </div>
+
+          <div class="measurement">
+            <label>Frecuencia cardiaca (lpm)
+              <input id="fc" name="fc" type="number" inputmode="numeric" min="20" max="250">
+            </label>
+            <label class="na-option"><input type="checkbox" data-na-for="fc"> <span>No aplica</span></label>
+          </div>
+
+          <div class="measurement">
+            <label>SpO₂ (%)
+              <input id="spo2" name="spo2" type="number" inputmode="numeric" min="0" max="100">
+            </label>
+            <label class="na-option"><input type="checkbox" data-na-for="spo2"> <span>No aplica</span></label>
+          </div>
         </div>
       </section>
 
@@ -123,16 +154,17 @@
       </section>
 
       <button class="primary" type="submit">GUARDAR REGISTRO</button>
-      <button class="secondary" type="button" id="historyBtn">VER REGISTROS GUARDADOS</button>
+      <button class="secondary" type="button" id="historyBtn">VER REGISTROS POR DÍA</button>
     </form>
 
     <section id="history" class="card hidden">
       <div class="section-head">
-        <h2>Registros guardados</h2>
+        <h2>Registros por día</h2>
         <button id="closeHistory" class="text-btn" type="button">Cerrar</button>
       </div>
+      <p class="hint">Cada fecha se agrupa en un solo bloque. Puedes exportar todos los registros de un día en un único archivo CSV.</p>
       <div id="historyList"></div>
-      <button id="exportBtn" class="secondary" type="button">EXPORTAR CSV</button>
+      <button id="exportAllBtn" class="secondary" type="button">EXPORTAR TODOS LOS REGISTROS</button>
     </section>
   </main>
 

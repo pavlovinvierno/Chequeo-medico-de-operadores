@@ -1,24 +1,20 @@
-# App — Chequeo Médico de Operadores
+# App — Chequeo Médico de Operadores — v2
 
-Primera versión funcional de la aplicación móvil.
+## Cambios de esta versión
+- Antidoping: Negativo / Positivo / **No aplica**.
+- Alcoholímetro: Negativo / Positivo / **No aplica**. Ya no captura valores numéricos.
+- Tensión arterial, temperatura, glucosa, peso, frecuencia cardiaca y SpO₂:
+  - captura manual, o
+  - opción **No aplica**.
+- Los registros se agrupan por **fecha**.
+- Cada día muestra el número de chequeos.
+- Se puede exportar **todo un día en un solo CSV**, evitando exportaciones individuales.
+- También se mantiene la exportación de todos los registros.
+- Fecha y hora siguen siendo editables manualmente.
+- El almacenamiento local continúa disponible para uso sin conexión.
+- Preparada para sincronización futura con Google Sheets.
 
-## Características actuales
-- Diseño responsive para celular, tablet y computadora.
-- Fecha y hora son MANUALES (se rellenan inicialmente con la fecha/hora actual, pero el usuario puede modificarlas).
-- Captura de todos los parámetros del formato de Registro de chequeo médico.
-- Validaciones básicas de datos.
-- Guardado local en el dispositivo mediante localStorage.
-- Historial de registros locales.
-- Exportación CSV.
-- PWA básica para instalación en dispositivos compatibles.
-- Preparada para conectar con Google Sheets mediante Google Apps Script.
+## Importante
+La clave de almacenamiento cambió a `v2`, por lo que los registros de la v1 no se muestran automáticamente en la v2. Esto evita mezclar estructuras diferentes durante las pruebas.
 
-## Conexión con Google Sheets
-El archivo `google_apps_script.gs` contiene el receptor para guardar cada registro en una hoja llamada `Registro`.
-
-Después de desplegar el Apps Script como aplicación web, copia su URL `/exec` y asigna:
-API_URL = "URL_DE_TU_APLICACION_WEB";
-en `app.js`.
-
-## Nota de arquitectura
-Esta primera versión prioriza la captura y funcionamiento móvil. Antes de ponerla en uso real con datos de pacientes/empleados, conviene agregar autenticación, control de acceso, cifrado/seguridad, política de respaldo y un mecanismo de sincronización robusto.
+Antes de uso real con datos personales/laborales, debe añadirse autenticación, control de acceso, seguridad de datos y una política de respaldo/sincronización.
