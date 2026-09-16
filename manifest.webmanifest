@@ -1,0 +1,10 @@
+{
+  "name": "Chequeo Médico de Operadores",
+  "short_name": "Chequeo Médico",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f6fa",
+  "theme_color": "#1f5fbf",
+  "lang": "es-MX",
+  "description": "Registro de chequeo médico de operadores de autobús"
+}
