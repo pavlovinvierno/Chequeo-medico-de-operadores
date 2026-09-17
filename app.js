@@ -4,8 +4,10 @@ const historyList = document.getElementById("historyList");
 const toast = document.getElementById("toast");
 const status = document.getElementById("status");
 
-const STORAGE_KEY = "chequeo_operadores_registros_v2";
-const API_URL = "https://script.google.com/macros/s/AKfycbw1LcBQem7JPmlumKX8KHt1ba7z92z1t8rGyJtaULsJIozK-JCxYQ5fI_Fe9h0nmnSn7Q/exec"; 
+const STORAGE_KEY = "chequeo_operadores_registros_v3";
+const LEGACY_STORAGE_KEY = "chequeo_operadores_registros_v2";
+// URL de la implementación Web App de Google Apps Script.
+const API_URL = "https://script.google.com/macros/s/AKfycbwiLcBQem7JPmlumKX8KHt1ba7z92z1t8rGyJtaULsJIozK-JCxYQ5fI_Fe9h0nmnSn7Q/exec";
 
 function pad(n){return String(n).padStart(2,"0")}
 function showToast(msg){
@@ -20,6 +22,23 @@ function setCurrentDateTime(){
 }
 function getRecords(){
   try{return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")}catch(e){return []}
+}
+
+function migrateLegacyRecords(){
+  try{
+    const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || "[]");
+    if(!current.length && legacy.length){
+      const migrated = legacy.map(r=>({
+        ...r,
+        id_registro: r.id_registro || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+        sync_status: r.sync_status || "pendiente"
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      return migrated.length;
+    }
+  }catch(e){}
+  return 0;
 }
 function saveRecords(records){localStorage.setItem(STORAGE_KEY, JSON.stringify(records));}
 
@@ -243,7 +262,13 @@ document.getElementById("exportAllBtn").addEventListener("click",()=>{
   exportCSV(getRecords(),"registros_chequeo_operadores_todos.csv");
 });
 
+document.getElementById("syncBtn").addEventListener("click", syncPending);
+
+const migratedCount = migrateLegacyRecords();
 setCurrentDateTime();
+if(migratedCount){
+  status.textContent = `${migratedCount} registro(s) anteriores recuperados; pendientes de sincronización`;
+}
 
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").catch(()=>{});

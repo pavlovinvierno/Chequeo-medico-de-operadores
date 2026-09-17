@@ -76,6 +76,23 @@ function doPost(e) {
     ensureHeaders_(sheet);
 
     const id = data.id_registro || Utilities.getUuid();
+
+    // Idempotencia: si el celular reintenta un registro ya recibido,
+    // no se crea una fila duplicada en Google Sheets.
+    if(sheet.getLastRow() > 1){
+      const idValues = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
+      for(let i = 0; i < idValues.length; i++){
+        if(String(idValues[i][0]) === String(id)){
+          return json_({
+            ok: true,
+            id_registro: id,
+            already_exists: true,
+            message: "Registro ya sincronizado"
+          });
+        }
+      }
+    }
+
     const syncedAt = new Date();
 
     sheet.appendRow([
