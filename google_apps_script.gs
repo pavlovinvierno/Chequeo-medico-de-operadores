@@ -61,11 +61,18 @@ function doPost(e) {
   try {
     lock.waitLock(10000);
 
-    if (!e || !e.postData || !e.postData.contents) {
+    // Acepta tanto JSON directo como el formulario POST oculto usado por GitHub Pages.
+    let raw = "";
+    if (e && e.parameter && e.parameter.payload) {
+      raw = e.parameter.payload;
+    } else if (e && e.postData && e.postData.contents) {
+      raw = e.postData.contents;
+    }
+    if (!raw) {
       throw new Error("No se recibió información.");
     }
 
-    const data = JSON.parse(e.postData.contents);
+    const data = JSON.parse(raw);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName(SHEET_NAME);
 

@@ -1,70 +1,33 @@
-# CONEXIÓN REAL CON GOOGLE SHEETS
+# Configuración Google Sheets — v3.1
 
-## Paso 1 — Crear la hoja
-En Google Drive crea una hoja de cálculo nueva, por ejemplo:
+La aplicación está preparada para enviar registros a una implementación de Google Apps Script.
 
-**Registro Médico de Operadores**
+## Importante sobre CORS
 
-No necesitas crear las columnas manualmente: el Apps Script las crea.
+GitHub Pages y Google Apps Script están en dominios distintos. Google Apps Script no expone encabezados CORS que permitan a la aplicación leer directamente la respuesta de `fetch()`.
 
-## Paso 2 — Crear el Apps Script
-Dentro de la hoja:
-**Extensiones → Apps Script**
+La aplicación v3.1 evita el bloqueo enviando el JSON como `text/plain` con `mode: "no-cors"`. El navegador no puede leer la respuesta, pero la solicitud POST sí puede llegar al Apps Script. Cada registro tiene un ID único y el backend evita duplicados cuando un registro se reintenta.
 
-Borra el código que aparezca y pega el contenido de `google_apps_script.gs`.
+Por esta razón, el estado local usa **enviado** en lugar de afirmar que la respuesta del servidor fue leída y confirmada por el navegador.
 
-Guarda el proyecto.
+## Configuración
 
-## Paso 3 — Publicarlo como aplicación web
-En Apps Script:
-**Implementar → Nueva implementación**
+1. Crea una Google Sheet.
+2. Abre **Extensiones → Apps Script**.
+3. Pega el contenido de `google_apps_script.gs`.
+4. Guarda.
+5. **Implementar → Nueva implementación**.
+6. Tipo: **Aplicación web**.
+7. Ejecutar como: tu cuenta.
+8. Configura el acceso de acuerdo con la política de tu organización.
+9. Copia la URL que termina en `/exec`.
+10. Si cambia la implementación, actualiza `API_URL` en `app.js`.
 
-Selecciona:
-**Tipo de implementación: Aplicación web**
+## Prueba
 
-Ejecutar como:
-**Tu cuenta**
+- Guarda un registro desde la aplicación.
+- Debe aparecer el mensaje **Registro enviado a Google Sheets**.
+- Revisa la pestaña `Registro` de la hoja.
+- Si no hay internet, el registro permanece local como **pendiente** y puede enviarse después con **SINCRONIZAR PENDIENTES**.
 
-Quién tiene acceso:
-elige la configuración que corresponda a tu organización. Si se permite acceso público, la URL puede recibir solicitudes sin iniciar sesión, por lo que debe evaluarse cuidadosamente antes de utilizar datos médicos reales.
-
-Presiona **Implementar** y autoriza los permisos solicitados.
-
-Copia la URL que termina en:
-`/exec`
-
-## Paso 4 — Colocar la URL en la app
-Abre `app.js` y busca:
-
-`const API_URL = "";`
-
-Cámbialo por:
-
-`const API_URL = "TU_URL_DEL_APPS_SCRIPT";`
-
-Guarda el archivo y vuelve a subirlo a GitHub.
-
-## Paso 5 — Prueba
-Haz un registro de prueba desde el celular.
-
-Al guardar:
-1. Se conserva localmente.
-2. La app intenta enviarlo a Google Sheets.
-3. Si se recibe correctamente, aparecerá una nueva fila en la pestaña `Registro`.
-4. Si no hay internet, queda como pendiente y puede intentarse la sincronización posteriormente desde **VER REGISTROS POR DÍA → SINCRONIZAR PENDIENTES**.
-
-## Estructura que recibirá Google Sheets
-
-ID registro | Fecha | Hora | # Empleado | Nombre | DM | HTA | Antidoping | Alcoholímetro | Destino | Tensión arterial | Temp. corporal | Glucosa | Peso (kg) | FC | SpO₂ | Apto (Sí/No) | Motivo | Observación | Atendió | Fecha de sincronización
-
-## Seguridad
-
-Antes de utilizar el sistema con datos reales:
-- restringir el acceso a la Google Sheet;
-- definir quién puede consultar/modificar los registros;
-- utilizar cuentas institucionales cuando corresponda;
-- revisar las políticas internas de manejo de datos;
-- evitar compartir públicamente la hoja;
-- considerar autenticación de usuarios y controles de acceso más estrictos si el proyecto pasa a producción.
-
-Esta versión ya incorpora una identificación única por registro y estado local/sincronizado.
+No compartas públicamente la hoja si contiene datos personales o médicos.

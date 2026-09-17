@@ -82,29 +82,76 @@ function validateMedicalValues(data){
 }
 
 /*
- * Google Apps Script no devuelve encabezados CORS para una respuesta fetch
- * normal desde GitHub Pages. El POST se envía como text/plain y en modo
- * no-cors, que evita el preflight. El navegador no permite leer la respuesta,
- * por lo que la confirmación se maneja como "enviado"; el backend usa el ID
- * único para evitar duplicados si el registro se reintenta.
+ * Envío a Google Apps Script mediante un formulario POST oculto.
+ * Se usa este método porque GitHub Pages y Apps Script están en dominios
+ * distintos y el navegador puede bloquear la lectura de respuestas por CORS.
+ * El formulario permite que el navegador entregue el POST al Web App sin
+ * necesitar una respuesta CORS legible por JavaScript.
  */
-async function sendToGoogleSheets(data){
-  if(!API_URL) return {sent:false};
-  await fetch(API_URL,{
-    method:"POST",
-    mode:"no-cors",
-    headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify(data),
-    keepalive:true
+function sendToGoogleSheets(data){
+  return new Promise((resolve, reject)=>{
+    if(!API_URL) return resolve({sent:false});
+
+    const frameName = `gsheets_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const iframe = document.createElement('iframe');
+    iframe.name = frameName;
+    iframe.style.display = 'none';
+    iframe.setAttribute('aria-hidden','true');
+    document.body.appendChild(iframe);
+
+    const postForm = document.createElement('form');
+    postForm.method = 'POST';
+    postForm.action = API_URL;
+    postForm.target = frameName;
+    postForm.style.display = 'none';
+
+    const payload = document.createElement('input');
+    payload.type = 'hidden';
+    payload.name = 'payload';
+    payload.value = JSON.stringify(data);
+    postForm.appendChild(payload);
+    document.body.appendChild(postForm);
+
+    let settled = false;
+    const cleanup = ()=>{
+      setTimeout(()=>{
+        postForm.remove();
+        iframe.remove();
+      }, 1500);
+    };
+
+    // La navegación del iframe confirma que el navegador pudo realizar el POST,
+    // pero por seguridad de origen no se intenta leer su contenido.
+    iframe.addEventListener('load', ()=>{
+      if(settled) return;
+      settled = true;
+      cleanup();
+      resolve({sent:true,id_registro:data.id_registro,unconfirmed:true});
+    });
+
+    try{
+      postForm.submit();
+      // Si el navegador no dispara load, no dejamos la interfaz bloqueada.
+      setTimeout(()=>{
+        if(settled) return;
+        settled = true;
+        cleanup();
+        resolve({sent:true,id_registro:data.id_registro,unconfirmed:true});
+      }, 5000);
+    }catch(err){
+      if(settled) return;
+      settled = true;
+      cleanup();
+      reject(err);
+    }
   });
-  return {sent:true,id_registro:data.id_registro,unconfirmed:true};
 }
 
 async function syncOneRecord(record){
   const result = await sendToGoogleSheets(record);
   if(result.sent){
     record.sync_status = "enviado";
-    record.sync_note = "Solicitud enviada a Google Apps Script; el navegador no permite leer la confirmación por CORS.";
+    record.sync_note = "POST enviado a Google Apps Script. La respuesta del servidor no puede leerse desde GitHub Pages.";
     record.last_sync_attempt = new Date().toISOString();
     return true;
   }
@@ -128,7 +175,7 @@ form.addEventListener("submit", async (e)=>{
     const result=await sendToGoogleSheets(data);
     if(result.sent){
       data.sync_status = "enviado";
-      data.sync_note = "Solicitud enviada a Google Apps Script; el navegador no permite leer la confirmación por CORS.";
+      data.sync_note = "POST enviado a Google Apps Script. La respuesta del servidor no puede leerse desde GitHub Pages.";
       data.last_sync_attempt = new Date().toISOString();
       const updated=getRecords();
       const pos=updated.findIndex(r=>r.id_registro===data.id_registro);
