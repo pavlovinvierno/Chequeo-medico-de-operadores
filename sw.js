@@ -1,4 +1,4 @@
-const CACHE = "chequeo-operadores-v3-final";
+const CACHE = "chequeo-operadores-v3.1";
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
