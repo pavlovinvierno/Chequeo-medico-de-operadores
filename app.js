@@ -5,7 +5,7 @@ const toast = document.getElementById("toast");
 const status = document.getElementById("status");
 
 const STORAGE_KEY = "chequeo_operadores_registros_v2";
-const API_URL = "https://script.google.com/macros/s/AKfycbw1LcBQem7JPmlumKX8KHt1ba7z92z1t8rGyJtaULsJIozK-JCxYQ5fI_Fe9h0nmnSn7Q/exec"; // Pega aquí la URL /exec de tu Google Apps Script.
+const API_URL = "https://script.google.com/macros/s/AKfycbw1LcBQem7JPmlumKX8KHt1ba7z92z1t8rGyJtaULsJIozK-JCxYQ5fI_Fe9h0nmnSn7Q/exec"; 
 
 function pad(n){return String(n).padStart(2,"0")}
 function showToast(msg){
