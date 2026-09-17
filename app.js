@@ -5,7 +5,7 @@ const toast = document.getElementById("toast");
 const status = document.getElementById("status");
 
 const STORAGE_KEY = "chequeo_operadores_registros_v2";
-const API_URL = ""; // Se configurará al conectar Google Sheets.
+const API_URL = "https://script.google.com/macros/s/AKfycbw1LcBQem7JPmlumKX8KHt1ba7z92z1t8rGyJtaULsJIozK-JCxYQ5fI_Fe9h0nmnSn7Q/exec"; // Pega aquí la URL /exec de tu Google Apps Script.
 
 function pad(n){return String(n).padStart(2,"0")}
 function showToast(msg){
@@ -89,14 +89,16 @@ function validateMedicalValues(data){
 }
 
 async function sendToGoogleSheets(data){
-  if(!API_URL) return false;
+  if(!API_URL) return {sent:false};
   const response = await fetch(API_URL,{
     method:"POST",
     headers:{"Content-Type":"text/plain;charset=utf-8"},
     body:JSON.stringify(data)
   });
   if(!response.ok) throw new Error("No se pudo enviar a Google Sheets");
-  return true;
+  const result = await response.json();
+  if(!result.ok) throw new Error(result.error || "Google Apps Script rechazó el registro");
+  return {sent:true,id_registro:result.id_registro};
 }
 
 form.addEventListener("submit", async (e)=>{
@@ -107,15 +109,27 @@ form.addEventListener("submit", async (e)=>{
   const validation=validateMedicalValues(data);
   if(validation){showToast(validation);return;}
 
+  data.id_registro = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  data.sync_status = API_URL ? "pendiente" : "local";
+
   const records=getRecords();
   records.unshift(data);
   saveRecords(records);
 
   try{
-    const synced=await sendToGoogleSheets(data);
-    status.textContent=synced ? "Registro guardado y enviado a Google Sheets" : "Registro guardado en el dispositivo";
+    const result=await sendToGoogleSheets(data);
+    if(result.sent){
+      data.sync_status = "sincronizado";
+      data.google_id = result.id_registro;
+      const updated=getRecords();
+      const pos=updated.findIndex(r=>r.id_registro===data.id_registro);
+      if(pos>=0){updated[pos]=data;saveRecords(updated);}
+      status.textContent="Registro guardado y sincronizado con Google Sheets";
+    }else{
+      status.textContent="Registro guardado en el dispositivo";
+    }
   }catch(err){
-    status.textContent="Guardado local; pendiente de sincronización";
+    status.textContent="Registro guardado localmente; pendiente de sincronización";
   }
 
   showToast("Registro guardado correctamente");
@@ -124,6 +138,26 @@ form.addEventListener("submit", async (e)=>{
   setCurrentDateTime();
   window.scrollTo({top:0,behavior:"smooth"});
 });
+
+async function syncPending(){
+  if(!API_URL){showToast("Primero configura la URL de Google Apps Script");return;}
+  const records=getRecords();
+  let sent=0;
+  for(const r of records){
+    if(r.sync_status==="sincronizado") continue;
+    try{
+      const result=await sendToGoogleSheets(r);
+      if(result.sent){
+        r.sync_status="sincronizado";
+        r.google_id=result.id_registro;
+        sent++;
+      }
+    }catch(_){}
+  }
+  saveRecords(records);
+  status.textContent = sent ? `${sent} registro(s) sincronizado(s)` : "No había registros pendientes o no hay conexión";
+  showToast(sent ? `${sent} registro(s) sincronizado(s)` : "Sin registros pendientes");
+}
 
 function formatDate(date){
   if(!date) return "";
